@@ -1,0 +1,12 @@
+/* defaults */
+select {
+    display: block;
+    margin: 10px auto;
+}
+
+/* classes */
+.chart {
+    width: min(600px, 90vw);
+    height: 400px;
+    margin: 5px auto;
+}
