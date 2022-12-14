@@ -124,7 +124,8 @@ const createChart = async (chart_id, metric, pt, value_type, notmerge) => {
         },
         xAxis: {
             type: 'category',
-            data: dates
+            data: dates,
+            boundaryGap: false
         },
         yAxis: {
             type: 'value',
