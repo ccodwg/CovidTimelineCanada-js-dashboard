@@ -113,12 +113,17 @@ const rollingAverage = (data, window) => {
 // create timeseries chart using Apache ECharts
 const createChart = async (chart_id, metric, pt, value_type, notmerge) => {
     const [dates, values, values_daily] = await parseData(metric, pt);
-    const chart = echarts.init(document.getElementById(chart_id));
+    const chart_div = document.getElementById(chart_id);
+    const chart = echarts.init(chart_div);
     const option = {
         title: {
             text: formatMetric(metric, value_type) +  ' in ' + formatPT(pt),
-            left: 'center'
-                    },
+            left: 'center',
+            textStyle: {
+                width: chart_div.offsetWidth * 0.9,
+                overflow: 'break'
+            }
+        },
         tooltip: {
             trigger: 'axis'
         },
@@ -222,10 +227,17 @@ const buildPage = async () => {
         createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value, true);
     });
 
-    // resize chart if window is resized
+    // resize chart and title width if window is resized
     const chart_1 = echarts.init(document.getElementById('chart_1'));
     window.addEventListener('resize', () => {
         chart_1.resize();
+        chart_1.setOption({
+            title: {
+                textStyle: {
+                    width: document.getElementById('chart_1').offsetWidth * 0.9
+                }
+            }
+        });
     });
 }
 
