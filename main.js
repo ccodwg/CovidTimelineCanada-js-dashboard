@@ -186,8 +186,8 @@ const createChart = async (chart_id, metric, pt, value_type, notmerge) => {
             showSymbol: false
         }]
     }
-    // add markLine for cases - when testing was restricted
-    if (metric == 'cases') {
+    // add markLine for case and test data - when testing was restricted
+    if (['cases', 'tests_completed'].includes(metric)) {
         option.series[0].markLine = {
             data: [ { xAxis: '2022-01-01', symbol: 'none' } ],
             label: { formatter: 'Testing restricted in 2022' }
