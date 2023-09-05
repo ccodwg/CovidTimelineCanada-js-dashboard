@@ -2,6 +2,9 @@
 const getMetrics = async () => {
     const response = await fetch('https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/docs/values/values.json');
     const data = await response.json();
+    // remove metrics that are not currently supported
+    delete data['hosp_admissions'];
+    delete data['icu_admissions'];
     return data
 }
 
