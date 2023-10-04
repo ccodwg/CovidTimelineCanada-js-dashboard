@@ -37,6 +37,21 @@ const parseData = async (metric, pt) => {
     return [dates, values, values_daily];
 }
 
+// get CAN completeness data from GitHub
+const getCompletenessData = async (metric) => {
+    const response = await fetch(`https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/data/can/${metric}_can_completeness.json`);
+    const data = await response.json();
+    return data;
+}
+
+// parse CAN completeness data from GitHub
+const parseCompletenessData = async (metric, pts) => {
+    const data = await getCompletenessData(metric);
+    const completeness = Object.entries(data).filter(function(x) {return pts.every(v => x[1]['pt'].includes(v));});
+    const completeness_date = completeness[completeness.length - 1][0];
+    return completeness_date;
+}
+
 // format PT names from abbreviations to full names
 const formatPT = (pt) => {
     let ptName = pt;
@@ -189,24 +204,31 @@ const createChart = async (chart_id, metric, pt, value_type, notmerge) => {
             showSymbol: false
         }]
     }
-    // add markLine for case and test data - when testing was restricted
-    if (['cases', 'tests_completed'].includes(metric)) {
+    
+    // update data note
+    const data_note = document.getElementById('chart_1_note_text');
+    let data_note_text = [];
+    if (['cases', 'deaths', 'tests_completed'].includes(metric)) {
+        data_note_text.push('Testing was restricted in late 2021/early 2022.')
+    }
+    if (pt == 'CAN' & ['cases', 'deaths', 'tests_completed'].includes(metric)) {
+        data_note_text.push('Canadian data may be incomplete in recent weeks. All provinces last reported on ' + await parseCompletenessData(metric, ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK']) + '.');
+    } else {
+        data_note_text.push(formatPT(pt) + ' last reported on ' + dates[dates.length - 1] + '.');
+    }
+    data_note.innerHTML = data_note_text.join(' ');
+
+    // add markLine for CAN completeness
+    if (['cases', 'deaths', 'tests_completed'].includes(metric) & pt == 'CAN') {
+        const completeness_date = await parseCompletenessData(metric, ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'ON', 'PE', 'QC', 'SK']);
         option.series[0].markLine = {
-            data: [ { xAxis: '2022-01-01', symbol: 'none' } ],
-            label: { formatter: 'Testing restricted in 2022' }
+            data: [ { xAxis: completeness_date, symbol: 'none' } ],
+            label: { formatter: 'All provinces\nlast reported' }
         };
-    } else {
-        // no markLine
-        option.series[0].markLine = {};
     }
+
     // redraw chart with new data
-    if (notmerge) {
-        // prevent markLine from persisting
-        chart.setOption(option, notMerge = true);
-    } else {
-        // persist markLine between drawings of chart
-        chart.setOption(option);
-    }
+    chart.setOption(option, notMerge = true);
     
 }
 
@@ -221,13 +243,13 @@ const buildPage = async () => {
 
     // rebuild chart 1 when new metric, pt or value_type is selected
     document.getElementById('metric').addEventListener('change', async () => {
-        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value, true);
+        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
     });
     document.getElementById('pt').addEventListener('change', async () => {
         createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
     });
     document.getElementById('value_type').addEventListener('change', async () => {
-        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value, true);
+        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
     });
 
     // resize chart and title width if window is resized
