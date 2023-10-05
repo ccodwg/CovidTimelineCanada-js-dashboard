@@ -1,3 +1,39 @@
+// define constants
+const ptNames = {
+    'CAN': 'Canada',
+    'AB': 'Alberta',
+    'BC': 'British Columbia',
+    'MB': 'Manitoba',
+    'NB': 'New Brunswick',
+    'NL': 'Newfoundland and Labrador',
+    'NS': 'Nova Scotia',
+    'NT': 'Northwest Territories',
+    'NU': 'Nunavut',
+    'ON': 'Ontario',
+    'PE': 'Prince Edward Island',
+    'QC': 'Quebec',
+    'SK': 'Saskatchewan',
+    'YT': 'Yukon'
+};
+
+const metricNames = {
+    'cases': 'cases',
+    'deaths': 'deaths',
+    'hospitalizations': 'hospitalizations',
+    'icu': 'ICU',
+    'tests_completed': 'tests completed',
+    'vaccine_coverage_dose_1': 'vaccine coverage (dose 1)',
+    'vaccine_coverage_dose_2': 'vaccine coverage (dose 2)',
+    'vaccine_coverage_dose_3': 'vaccine coverage (dose 3)',
+    'vaccine_coverage_dose_4': 'vaccine coverage (dose 4)',
+    'vaccine_administration_total_doses': 'vaccine administration (total doses)',
+    'vaccine_administration_dose_1': 'vaccine administration (dose 1)',
+    'vaccine_administration_dose_2': 'vaccine administration (dose 2)',
+    'vaccine_administration_dose_3': 'vaccine administration (dose 3)',
+    'vaccine_administration_dose_4': 'vaccine administration (dose 4)',
+};
+
+
 // get metrics
 const getMetrics = async () => {
     const response = await fetch('https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/docs/values/values.json');
@@ -53,49 +89,12 @@ const parseCompletenessData = async (metric, pts) => {
 }
 
 // format PT names from abbreviations to full names
-const formatPT = (pt) => {
-    let ptName = pt;
-    switch (pt) {
-        case 'CAN': ptName = 'Canada'; break;
-        case 'AB' : ptName = 'Alberta'; break;
-        case 'BC' : ptName = 'British Columbia'; break;
-        case 'MB' : ptName = 'Manitoba'; break;
-        case 'NB' : ptName = 'New Brunswick'; break;
-        case 'NL' : ptName = 'Newfoundland and Labrador'; break;
-        case 'NS' : ptName = 'Nova Scotia'; break;
-        case 'NT' : ptName = 'Northwest Territories'; break;
-        case 'NU' : ptName = 'Nunavut'; break;
-        case 'ON' : ptName = 'Ontario'; break;
-        case 'PE' : ptName = 'Prince Edward Island'; break;
-        case 'QC' : ptName = 'Quebec'; break;
-        case 'SK' : ptName = 'Saskatchewan'; break;
-        case 'YT' : ptName = 'Yukon'; break;
-    }
-    return ptName;
-}
+const formatPT = (pt) => ptNames[pt];
 
 // format metric names from abbreviations to full names
 // should take into account value_type as well
 const formatMetric = (metric, value_type) => {
-    let metricName = metric;
-    switch (metric) {
-        case 'cases': metricName = 'cases'; break;
-        case 'deaths': metricName = 'deaths'; break;
-        case 'hospitalizations': metricName = 'hospitalizations'; break;
-        case 'icu': metricName = 'ICU'; break;
-        case 'tests_completed': metricName = 'tests completed'; break;
-        case 'vaccine_coverage_dose_1': metricName = 'vaccine coverage (dose 1)'; break;
-        case 'vaccine_coverage_dose_2': metricName = 'vaccine coverage (dose 2)'; break;
-        case 'vaccine_coverage_dose_3': metricName = 'vaccine coverage (dose 3)'; break;
-        case 'vaccine_coverage_dose_4': metricName = 'vaccine coverage (dose 4)'; break;
-        case 'vaccine_coverage_dose_5': metricName = 'vaccine coverage (dose 5)'; break;
-        case 'vaccine_administration_total_doses': metricName = 'vaccine administration (total doses)'; break;
-        case 'vaccine_administration_dose_1': metricName = 'vaccine administration (dose 1)'; break;
-        case 'vaccine_administration_dose_2': metricName = 'vaccine administration (dose 2)'; break;
-        case 'vaccine_administration_dose_3': metricName = 'vaccine administration (dose 3)'; break;
-        case 'vaccine_administration_dose_4': metricName = 'vaccine administration (dose 4)'; break;
-        case 'vaccine_administration_dose_5': metricName = 'vaccine administration (dose 5)'; break;
-    }
+    let metricName = metricNames[metric];
     if (value_type == 'cumulative') {
         if (metric == 'hospitalizations' | metric == 'icu') {
             metricName = 'Active ' + metricName;
@@ -232,6 +231,10 @@ const createChart = async (chart_id, metric, pt, value_type, notmerge) => {
     
 }
 
+const rebuildChart = async () => {
+    await createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
+}
+
 // build page
 const buildPage = async () => {
     // get metrics and build options for metric dropdown
@@ -242,15 +245,9 @@ const buildPage = async () => {
     await createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
 
     // rebuild chart 1 when new metric, pt or value_type is selected
-    document.getElementById('metric').addEventListener('change', async () => {
-        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
-    });
-    document.getElementById('pt').addEventListener('change', async () => {
-        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
-    });
-    document.getElementById('value_type').addEventListener('change', async () => {
-        createChart('chart_1', document.getElementById('metric').value, document.getElementById('pt').value, document.getElementById('value_type').value);
-    });
+    document.getElementById('metric').addEventListener('change', rebuildChart);
+    document.getElementById('pt').addEventListener('change', rebuildChart);
+    document.getElementById('value_type').addEventListener('change', rebuildChart);
 
     // resize chart and title width if window is resized
     const chart_1 = echarts.init(document.getElementById('chart_1'));
