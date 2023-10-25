@@ -1,3 +1,7 @@
+// initialize cache
+const cacheCAN = {};
+const cachePT = {};
+
 // define constants
 const ptNames = {
     'CAN': 'Canada',
@@ -15,33 +19,22 @@ const ptNames = {
     'SK': 'Saskatchewan',
     'YT': 'Yukon'
 };
-
-const metricNames = {
-    'cases': 'cases',
-    'deaths': 'deaths',
-    'hospitalizations': 'hospitalizations',
-    'icu': 'ICU',
-    'tests_completed': 'tests completed',
-    'vaccine_coverage_dose_1': 'vaccine coverage (dose 1)',
-    'vaccine_coverage_dose_2': 'vaccine coverage (dose 2)',
-    'vaccine_coverage_dose_3': 'vaccine coverage (dose 3)',
-    'vaccine_coverage_dose_4': 'vaccine coverage (dose 4)',
-    'vaccine_administration_total_doses': 'vaccine administration (total doses)',
-    'vaccine_administration_dose_1': 'vaccine administration (dose 1)',
-    'vaccine_administration_dose_2': 'vaccine administration (dose 2)',
-    'vaccine_administration_dose_3': 'vaccine administration (dose 3)',
-    'vaccine_administration_dose_4': 'vaccine administration (dose 4)',
-};
-
+var metricNames = {}; // retreived later
 
 // get metrics
 const getMetrics = async () => {
     const response = await fetch('https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/docs/values/values.json');
     const data = await response.json();
-    // remove metrics that are not currently supported
-    delete data['hosp_admissions'];
-    delete data['icu_admissions'];
     return data
+}
+
+// get metric names
+const getMetricNames = async (metrics) => {
+    const metricNames = {};
+    for (const k in metrics) {
+        metricNames[k] = metrics[k]['name_long'];
+    }
+    return metricNames
 }
 
 // build select options for metrics
@@ -55,16 +48,35 @@ const optionsMetrics = async (metrics) => {
     }
 }
 
-// get data from API
+// get data from GitHub
 const getData = async (metric, pt) => {
-    const response = (pt == 'CAN') ?
-        await fetch(`https://api.opencovid.ca/timeseries?geo=can&stat=${metric}`) :
-        await fetch(`https://api.opencovid.ca/timeseries?geo=pt&stat=${metric}&loc=${pt}`)
-    const data = await response.json();
-    return data['data'][metric];
+    let data;
+    // determine cache to use
+    const cache = (pt === 'CAN') ? cacheCAN : cachePT;
+    // attempt cache retrieval
+    if (cache[metric]) {
+        data = cache[metric];
+    } else {
+        // fetch data if not in cache
+        const response = (pt === 'CAN') ?
+            await fetch(`https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/data/can/${metric}_can.csv`) :
+            await fetch(`https://raw.githubusercontent.com/ccodwg/CovidTimelineCanada/main/data/pt/${metric}_pt.csv`);
+        // process data
+        const csv = await response.text();
+        const parsed = await Papa.parse(csv, {header: true, dynamicTyping: true});
+        // add data to cache
+        data = parsed['data'];
+        cache[metric] = data;
+    }
+    // filter data to desired PT
+    if (pt !== 'CAN') {
+        data = data.filter(function(x) {return x['region'] == pt;});
+    }
+    // return data
+    return data
 }
 
-// parse data from API
+// parse data from GitHub
 const parseData = async (metric, pt) => {
     const data = await getData(metric, pt);
     const dates = Object.entries(data).map(function(x) {return x[1]['date'];});
@@ -239,6 +251,7 @@ const rebuildChart = async () => {
 const buildPage = async () => {
     // get metrics and build options for metric dropdown
     const metrics = await getMetrics();
+    metricNames = await getMetricNames(metrics); // parse metric names
     await optionsMetrics(metrics);
 
     // create chart 1 on load
