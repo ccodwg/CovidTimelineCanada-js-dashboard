@@ -1,12 +1,86 @@
-/* defaults */
-select {
-    display: block;
-    margin: 10px auto;
+:root {
+    color-scheme: light;
 }
 
-/* classes */
+body {
+    background: #f8f9fa;
+}
+
+.navbar-brand {
+    white-space: normal;
+}
+
+.archive-notice {
+    border-left: 4px solid #6c757d;
+}
+
 .chart {
-    width: min(600px, 90vw);
-    height: 400px;
-    margin: 5px auto;
+    width: 100%;
+    height: 500px;
+    min-height: 360px;
+}
+
+.selected-geographies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 2rem;
+}
+
+.geography-chip {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #adb5bd;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 0.4rem;
+    padding: 0.3rem 0.45rem 0.3rem 0.7rem;
+}
+
+.geography-chip button {
+    background: transparent;
+    border: 0;
+    color: #495057;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0 0.15rem;
+}
+
+.geography-chip button:hover,
+.geography-chip button:focus {
+    color: #b02a37;
+}
+
+#reporting-status ul {
+    margin-bottom: 0;
+}
+
+#reporting-status .small,
+.note-range,
+.note-source {
+    color: #6c757d;
+}
+
+#data-notes > summary {
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    list-style-position: inside;
+}
+
+.notes-body > :last-child,
+.notes-body > :last-child > :last-child {
+    margin-bottom: 0;
+}
+
+.data-note + .data-note {
+    border-top: 1px solid #dee2e6;
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+@media (max-width: 575.98px) {
+    .chart {
+        height: 420px;
+    }
 }
